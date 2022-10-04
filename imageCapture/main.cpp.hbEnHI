@@ -1,0 +1,79 @@
+#include <QCoreApplication>
+
+#include "opencv4/opencv2/core.hpp"
+#include <opencv4/opencv2/core/utility.hpp>
+#include "opencv4/opencv2/imgproc.hpp"
+#include "opencv4/opencv2/calib3d.hpp"
+#include "opencv4/opencv2/imgcodecs.hpp"
+#include "opencv4/opencv2/videoio.hpp"
+#include "opencv4/opencv2/highgui.hpp"
+
+#include <opencv4/opencv2/core/mat.hpp>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <string>
+#include <sstream>
+
+using namespace cv;
+using namespace  std;
+
+Mat rotate(Mat src, double angle)
+{
+    Mat dst;
+    Point2f pt(src.cols/2., src.rows/2.);
+    Mat r = getRotationMatrix2D(pt, angle, 1.0);
+    warpAffine(src, dst, r, Size(src.cols, src.rows));
+    return dst;
+}
+
+int main (){
+
+    std::vector<int> compression_params;
+    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(100);
+
+    Mat img;
+    VideoCapture cam = VideoCapture(0);
+    if(!cam.isOpened()){
+        printf("!No se pudo abrir la camara!\n");
+        getchar();//espera que se preione Enter para dejar seguir
+        return -1;
+    }
+
+    bool SaveImage;
+    int nimgs = 0;
+
+//    std::string direccion = "C:\\Users\\GLOBAL\\Documents\\Proj_Qt\\CaliCam_2\\CamTorreon";
+    string direccion = "/home/glinteci7/Dropbox/GIT/Projects/Qt_Developments/CameraCal/redCam3_";
+//    string direccion = "/home/glinteci7/Documents/imag";
+    std::stringstream Saveimgs;
+
+    for(;;){
+
+    cam >> img;
+
+//    img = rotate(img, -90); //para camara trasera
+
+    namedWindow("image",WINDOW_AUTOSIZE);
+    imshow("image", img);
+
+    if(waitKey(30) == 13){//espera 30ms y pregunta por ENTER
+
+        Saveimgs << direccion << nimgs << ".jpg";
+        SaveImage = imwrite(Saveimgs.str().c_str(), img, compression_params);
+        Saveimgs = std::stringstream();
+        nimgs++;
+            if (!SaveImage){
+                printf("!image %d saved failed!\n",nimgs);
+
+            }else{
+                printf("!image %d saved successful!\n",nimgs);
+            }
+            if (nimgs == 21){break;}
+        }
+    }
+    getchar();
+    return 0;
+}
